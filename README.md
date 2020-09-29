@@ -1,8 +1,8 @@
 # GoPing
-My Practice
+My Practice  
 deterioration version of ping
 # DEMO 
-I use raw socket, so require root privs.
+I use raw socket, so require root privs.  
 `$ sudo go run main.go google.com`
 Using tshark, tcpdump and so on, you can confirm GoPing's packet
 1. running the GoPing
