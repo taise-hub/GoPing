@@ -3,11 +3,11 @@ My Practice
 deterioration version of ping
 # DEMO 
 I use raw socket, so require root privs.  
-`$ sudo go run main.go google.com`
+`$ sudo go run main.go google.com`  
 Using tshark, tcpdump and so on, you can confirm GoPing's packet
-1. running the GoPing
+1. running the GoPing  
 `$ sudo go run main.go 8.8.8.8`
-2. capture the packet 
+2. capture the packet   
 ```
 $ sudo tshark -ni en0 -f icmp
  Capturing on 'Wi-Fi: en0'
