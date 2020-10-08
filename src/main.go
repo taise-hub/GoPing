@@ -125,6 +125,6 @@ func main() {
 		//ECHOReplyを受け取るまでブロック
 		duration := time.Since(<-ch)
 		d, _ := conn.Read(resp)
-		fmt.Printf("%x bytes from %s: time=%s\n", d, os.Args[1], duration)
+		fmt.Printf("%d bytes from %s: icmp_seq=%d time=%s\n", d, os.Args[1], resp[27], duration)
 	}
 }
