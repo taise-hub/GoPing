@@ -2,22 +2,21 @@ package main
 
 import (
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"net"
 	"os"
 	"time"
 )
 
-type ICMPEchoHeader struct {
+type ICMPPacket struct {
 	Type     uint8  //ICMP_Type
 	Code     uint8  //ICMP_Code
 	Checksum uint16 //CheckSum
-	ID       uint16 //ICMP_Id
-	Seq      uint16 //ICMP_Seq
+	ID       uint16 //ICMP_ID
+	Seq      uint16 //ICMP_Sequence
 }
 
-func makeReqFormat(header ICMPEchoHeader) ([]byte, error) {
+func makeReqFormat(header ICMPPacket) ([]byte, error) {
 	data, err := time.Now().MarshalBinary()
 	if err != nil {
 		println(err)
@@ -46,7 +45,7 @@ func getIPAddr(host string) (net.IP, error) {
 			return ip.To4(), err
 		}
 	}
-	return nil, errors.New("Not found IPv4 addr")
+	return nil, err
 }
 
 func checkSum(buf []byte) uint16 {
@@ -81,12 +80,37 @@ func checkSum(buf []byte) uint16 {
 	return ^uint16(sum)
 }
 
+func IcmpReq(conn net.Conn, ch chan time.Time) {
+	seq := 0
+	pid := os.Getpid()
+	for {
+		message := ICMPPacket{
+			Type:     0x08, //ECHO要求
+			Code:     0x00,
+			Checksum: 0x00,
+			ID:       uint16(pid),
+			Seq:      uint16(seq),
+		}
+		b, err := makeReqFormat(message)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		_, _ = conn.Write(b)
+		ch <- time.Now()
+		seq++
+		time.Sleep(time.Second)
+	}
+}
+
 func main() {
+
 	ip, err := getIPAddr(os.Args[1])
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+
 	conn, err := net.Dial("ip4:1", ip.String())
 	defer conn.Close()
 	if err != nil {
@@ -94,23 +118,13 @@ func main() {
 		return
 	}
 
-	pid := os.Getpid()
-	seq := 0
+	ch := make(chan time.Time)
+	go IcmpReq(conn, ch)
+	resp := make([]byte, 100)
 	for {
-		eHeader := ICMPEchoHeader{
-			Type:     0x08, //ECHO要求
-			Code:     0x00,
-			Checksum: 0x00,
-			ID:       uint16(pid),
-			Seq:      uint16(seq),
-		}
-		b, err := makeReqFormat(eHeader)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		_, _ = conn.Write(b)
-		time.Sleep(time.Second)
-		seq++
+		//ECHOReplyを受け取るまでブロック
+		duration := time.Since(<-ch)
+		d, _ := conn.Read(resp)
+		fmt.Printf("%x bytes from %s: time=%s\n", d, ip, duration)
 	}
 }
