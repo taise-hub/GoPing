@@ -1,4 +1,5 @@
 # GoPing
+スーパー車輪の再開発  
 My Practice  
 deterioration version of ping
 # DEMO 
